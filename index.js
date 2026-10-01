@@ -1,3 +1,5 @@
+const ADMIN_ID = "61594431842879";
+
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
@@ -174,12 +176,15 @@ function handleMessage(api, event){
     command = body.slice(PREFIX.length).split(/\s+/)[0].toLowerCase();
   }
 
-  // Kapag naka-off, ang !on lang ang pinapansin
-  if(!botState.active && command !== "on") return;
+  const isAdmin = String(event.senderID) === ADMIN_ID;
+
+  // Kapag naka-off, ang !on lang ng admin ang pinapansin
+  if(!botState.active && !(isAdmin && command === "on")) return;
 
   messageCount++;
 
-  if(command && Object.prototype.hasOwnProperty.call(COMMANDS, command)){
+  // Admin lang ang pwedeng gumamit ng commands; ang iba ay "hi lads" lang
+  if(isAdmin && command && Object.prototype.hasOwnProperty.call(COMMANDS, command)){
     const reply = COMMANDS[command].run();
     api.sendMessage(reply, event.threadID);
     return;
