@@ -74,6 +74,8 @@ function formatUptime(ms){
   return (d ? d + "d " : "") + h + "h " + m + "m " + sec + "s";
 }
 
+const REACTIONS = ["🔥", "🤣", "😆", "🔝"];
+
 const COMMANDS = {
   status: {
     description: "Show bot status, uptime and messages processed",
@@ -102,6 +104,24 @@ const COMMANDS = {
       botState.active = false;
       saveBotState();
       return "Bot is now OFF. Send " + PREFIX + "on to turn it back on.";
+    }
+  },
+  react: {
+    description: "Bot sends a message and reacts to it with a random emoji (🔥, 🤣, 😆, 🔝)",
+    run: (api, event)=>{
+      const emoji = REACTIONS[Math.floor(Math.random() * REACTIONS.length)];
+      api.sendMessage("Reacting to my own message " + emoji, event.threadID, (err, info)=>{
+        if(err){
+          console.error("Hindi ma-send ang !react message:", err.errorSummary || err.error || err);
+          return;
+        }
+        const messageID = info && info.messageID;
+        if(!messageID) return;
+        api.setMessageReaction(emoji, messageID, (reactErr)=>{
+          if(reactErr) console.error("Hindi ma-react sa message:", reactErr.errorSummary || reactErr.error || reactErr);
+        }, true);
+      });
+      return null; // naka-send na ang message, walang extra reply
     }
   }
 };
@@ -185,8 +205,8 @@ function handleMessage(api, event){
 
   // Admin lang ang pwedeng gumamit ng commands; ang iba ay "hi lads" lang
   if(isAdmin && command && Object.prototype.hasOwnProperty.call(COMMANDS, command)){
-    const reply = COMMANDS[command].run();
-    api.sendMessage(reply, event.threadID);
+    const reply = COMMANDS[command].run(api, event);
+    if(reply) api.sendMessage(reply, event.threadID);
     return;
   }
 
