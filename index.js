@@ -20,6 +20,59 @@ let messageCount = 0;
 let retryScheduled = false;
 let botState = loadBotState();
 
+const ROASTS = [
+  "ang hina mo, nakakaawa ka 😹",
+  "iyak ka na lang kaya? 😏",
+  "basic ka lang sakin 😂",
+  "wala kang kwenta kausap 😆",
+  "ang bobo mo ka-bonding 🤣",
+  "puro ka satsat, wala ka namang alam 😭",
+  "laos ka na 😴",
+  "ang yabang mo wala ka namang binatbat 😜",
+  "tahimik ka na lang, nakakahiya ka eh 😹",
+  "ang lakas ng trip mo ah 😏",
+  "wag ka na magpumilit, talo ka na 😂",
+  "ang pangit ng galawan mo 😆",
+  "iyakin ka pala eh 🤣",
+  "ang soft mo naman 😭",
+  "tulog ka na lang ulit 😴",
+  "wala kang panama sakin 😜",
+  "ang ingay mo, wala ka namang kwenta 😹",
+  "pangit ka kausap 😏",
+  "ang boring mo 😂",
+  "durog ka sakin palagi 😆",
+  "wala kang alam 🤣",
+  "ang hina ng utak mo 😭",
+  "ang dali mo asarin ah 😴",
+  "pikon ka na agad? 😜",
+  "ang babaw mo 😹",
+  "wala ka sa level ko 😏",
+  "ang kulit mo, nakakainis ka 😂",
+  "manahimik ka na lang kaya? 😆",
+  "ang angas mo, wala ka namang ibubuga 🤣",
+  "ang pangit ng ugali mo 😭",
+  "iyak na yan? 😴",
+  "ang hina mo mag-isip 😜",
+  "wala kang silbi 😹",
+  "ang yabang mo, durog ka naman 😏",
+  "ang lakas maka astang matalino, bobo ka naman 😂",
+  "ang dami mong sinabi, puro basura naman 😆",
+  "nakakasawa ka na 🤣",
+  "ang pangit mo kausap, pramis 😭",
+  "ang bagal mo maka-gets 😴",
+  "wala kang kwentang kaaway 😜",
+  "ang hina mo talaga 😹",
+  "bat ang lakas ng loob mong magsalita? 😏",
+  "ang tapang mo sa chat ah 😂",
+  "ang ingay mo, parang wala kang alam sa buhay 😆",
+  "ang weak mo 🤣",
+  "ang arte mo naman 😭",
+  "ang bobo mo, nakakabilib 😴",
+  "ang lakas mo mang-asar, ikaw pala iyakin 😜",
+  "wala ka talagang pag-asa 😹",
+  "GG ka na sakin, tapos ka na 😏"
+];
+
 function ensureDir(filePath) {
   try {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -234,6 +287,10 @@ function onLogin(api) {
   });
 }
 
+function getRandomRoast() {
+  return ROASTS[Math.floor(Math.random() * ROASTS.length)];
+}
+
 function handleMessage(api, event) {
   const body = String(event.body).trim();
   let command = null;
@@ -254,7 +311,7 @@ function handleMessage(api, event) {
     return;
   }
 
-  api.sendMessage("hi lads", event.threadID);
+  api.sendMessage(getRandomRoast(), event.threadID);
 }
 
 startBot();
