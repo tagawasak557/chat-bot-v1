@@ -37,6 +37,72 @@ const login = ws3.login || ws3.default || ws3;
 
 const APPSTATE_PATH = "/app/data/appstate.json";
 const RETRY_MS = 60000;
+const STATE_PATH = "/app/data/bot-state.json";
+const PREFIX = "!";
+
+const startTime = Date.now();
+let messageCount = 0;
+let botState = loadBotState();
+
+function loadBotState(){
+  try{
+    const data = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    return { active: data.active !== false };
+  }catch(e){
+    if(e.code !== "ENOENT") console.error("bot-state.json invalid o hindi mabasa:", e.message || e);
+    return { active: true };
+  }
+}
+
+function saveBotState(){
+  try{
+    fs.mkdirSync(path.dirname(STATE_PATH), { recursive:true });
+    fs.writeFileSync(STATE_PATH, JSON.stringify(botState, null, 2));
+  }catch(e){
+    console.error("Hindi ma-save ang bot-state.json:", e.message || e);
+  }
+}
+
+function formatUptime(ms){
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return (d ? d + "d " : "") + h + "h " + m + "m " + sec + "s";
+}
+
+const COMMANDS = {
+  status: {
+    description: "Show bot status, uptime and messages processed",
+    run: ()=>[
+      "Status: online",
+      "Active: " + (botState.active ? "yes" : "no"),
+      "Uptime: " + formatUptime(Date.now() - startTime),
+      "Messages processed: " + messageCount
+    ].join("\n")
+  },
+  commands: {
+    description: "List all available commands",
+    run: ()=>Object.keys(COMMANDS).map(name=>PREFIX + name + " - " + COMMANDS[name].description).join("\n")
+  },
+  on: {
+    description: "Turn the bot on",
+    run: ()=>{
+      botState.active = true;
+      saveBotState();
+      return "Bot is now ON";
+    }
+  },
+  off: {
+    description: "Turn the bot off (ignores messages until !on)",
+    run: ()=>{
+      botState.active = false;
+      saveBotState();
+      return "Bot is now OFF. Send " + PREFIX + "on to turn it back on.";
+    }
+  }
+};
 
 function initAppState(){
   try{
@@ -96,9 +162,30 @@ function onLogin(api){
     }
     if(!event) return;
     if(event.type==="message" && event.body && event.senderID != api.getCurrentUserID()){
-      api.sendMessage("hi lads", event.threadID);
+      handleMessage(api, event);
     }
   });
+}
+
+function handleMessage(api, event){
+  const body = String(event.body).trim();
+  let command = null;
+  if(body.startsWith(PREFIX)){
+    command = body.slice(PREFIX.length).split(/\s+/)[0].toLowerCase();
+  }
+
+  // Kapag naka-off, ang !on lang ang pinapansin
+  if(!botState.active && command !== "on") return;
+
+  messageCount++;
+
+  if(command && Object.prototype.hasOwnProperty.call(COMMANDS, command)){
+    const reply = COMMANDS[command].run();
+    api.sendMessage(reply, event.threadID);
+    return;
+  }
+
+  api.sendMessage("hi lads", event.threadID);
 }
 
 initAppState();
