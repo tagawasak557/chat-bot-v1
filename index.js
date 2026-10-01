@@ -2,21 +2,17 @@ const fs = require("fs");
 const express = require("express");
 const app = express();
 
-app.get("/", (req,res)=>res.send("chat-bot-v1 Active"));
+app.get("/", (req,res)=>res.send("chat-bot-v1 Active - hi lads"));
 app.listen(process.env.PORT||3000, ()=>console.log("Web running"));
 
-const ws3 = require("ws3-fca");
-const login = ws3.default || ws3.login || ws3;
+const login = require("fca-unofficial");
 
-// DITO YUNG FIX - wag i-JSON.parse, string lang ipasa
-const appState = fs.readFileSync("appstate.json", "utf8");
-console.log("Appstate string length:", appState.length);
+// load appstate
+const appState = JSON.parse(fs.readFileSync("appstate.json","utf8"));
+console.log("Loaded appstate items:", appState.length);
 
 login({ appState }, (err, api) => {
-  if(err) {
-    console.error("Login failed - baka expired appstate:", err);
-    return;
-  }
+  if(err) return console.error("Login failed:", err);
   console.log("chat-bot-v1 IS RUNNING - hi lads");
   api.setOptions({ listenEvents: true, selfListen: false });
   api.listenMqtt((err, event) => {
